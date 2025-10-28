@@ -1,0 +1,5 @@
+#本地开发测试配置
+file:
+  staticPath: http://localhost:8777
+  staticPatternPath: /upload/file/**
+  uploadFolder: D://02_ALL_WORKSPACE/99_tmp/

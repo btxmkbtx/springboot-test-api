@@ -1,0 +1,21 @@
+#yml中文注解一定要把IDEA的setting＝＞file encoding设置为UTF-8，否则项目编译报错 MalformedInputException
+
+server:
+  port: 8777
+
+#freemarker.cache=false 禁用模板引擎的缓存，html修改后按Ctrl+F9热加载
+spring:
+  freemarker:
+    suffix: .html
+    cache: false
+  servlet:
+    multipart:
+      #单个文件maxsize，默认就是1MB
+      max-file-size: 3MB
+      #设置上传数据总大小
+      max-request-size: 10MB
+      #自定义上传临时目录，意义不大没必要
+      #location: D://02_ALL_WORKSPACE//99_tmp
+  profiles:
+    #激活application-dev.yml  或者其他环境对应的配置文件
+    active: dev

@@ -1,0 +1,5 @@
+#内测Linux服务器文件上传配置
+file:
+  staticPath: http://www.btxdemo.com
+  staticPatternPath: /upload/file/**
+  uploadFolder: /home/tmp/upload/

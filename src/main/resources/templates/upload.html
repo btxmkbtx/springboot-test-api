@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>文件上传</title>
+</head>
+<body>
+<div>
+    <h1>文件上传</h1>
+
+    <h2>文件上传后返回服务器静态资源映射链接</h2>
+    <form action="/upload/file" enctype="multipart/form-data" method="post">
+        <span>文件夹名:</span>
+        <input name="dir" value="bbs">
+        <input name="file" type="file">
+        <input type="submit" value="文件上传1">
+    </form>
+
+    <h2>文件上传后返回服务器静态资源JSON信息</h2>
+    <form action="/upload/file2" enctype="multipart/form-data" method="post">
+        <span>文件夹名:</span>
+        <input name="dir" value="bbs">
+        <input name="file" type="file">
+        <input type="submit" value="文件上传2">
+    </form>
+</div>
+</body>
+</html>
