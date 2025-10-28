@@ -147,6 +147,7 @@ public class FileStreamController {
     /**
      * 返回1个 视频 的文件流（支持多文件和Range请求）
      * 对应 Express.js 版本：router.get("/api/preview/video", (req, res) => { ... })
+     * 文件流可以分块传输，这满足了web视频边播放边缓冲的需求。
      */
     @GetMapping("/api/preview/video")
     public void getVideo(
@@ -199,7 +200,7 @@ public class FileStreamController {
         response.setHeader("Accept-Ranges", "bytes");
         response.setHeader("Cache-Control", "public, max-age=3600");
 
-        // 流式传输文件，对应Express.js中的 fs.createReadStream(filePath).pipe(res)
+        // 流式分块传输文件，对应Express.js中的 fs.createReadStream(filePath).pipe(res)
         try (InputStream fileInputStream = Files.newInputStream(filePath);
              OutputStream outputStream = response.getOutputStream()) {
 
@@ -210,6 +211,66 @@ public class FileStreamController {
             }
             outputStream.flush();
         }
+    }
+
+    /**
+     * 返回1个 视频 的字节数组（一次性加载到内存）（不推荐）
+     * 与上面文件流分开传输比较：
+     * 特性			流式传输			            字节数组
+     * 内存使用		低且恒定			            与文件大小成正比
+     * 响应时间		快（立即开始，边播放边缓冲）		慢（需等待整个文件完全读取到响应体）
+     * 大文件支持	    优秀				            可能内存溢出
+     * 用户体验		好（渐进式加载）	            差（长时间等待）
+     *
+     */
+    @GetMapping("/api/preview/video/bytes")
+    @ResponseBody
+    public ResponseEntity<byte[]> getVideoBytes(
+            @RequestParam(value = "file", defaultValue = "IMG_1336.MOV") String fileName,
+            HttpServletRequest request) throws IOException {
+
+        System.out.println("/api/preview/video " + fileName + " (字节数组模式)");
+
+        // 构建视频文件路径，对应Express.js中的 path.join
+        Path videoDir = Paths.get("src/main/resources/video");
+        Path filePath = videoDir.resolve(fileName);
+
+        // 安全检查：防止路径遍历攻击，对应Express.js中的安全检查
+        if (!filePath.normalize().startsWith(videoDir.normalize())) {
+            return ResponseEntity.badRequest()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"error\": \"Invalid file path\"}".getBytes(StandardCharsets.UTF_8));
+        }
+
+        if (!Files.exists(filePath)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String ext = getFileExtension(fileName).toLowerCase();
+        String contentType = getVideoContentType(ext);
+        String rangeHeader = request.getHeader("Range");
+
+        // 一次性读取整个文件到字节数组（对应 fs.readFileSync）
+        byte[] fileBytes = Files.readAllBytes(filePath);
+        long fileSize = fileBytes.length;
+
+        // 构建响应头
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", contentType);
+        headers.add("Content-Length", String.valueOf(fileSize));
+        headers.add("Accept-Ranges", "bytes");
+        headers.add("Cache-Control", "public, max-age=3600");
+
+        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+            // Range请求处理（可选实现）
+            // 暂时返回整个文件，与Express.js版本保持一致
+            System.out.println("收到Range请求，但返回完整文件: " + rangeHeader);
+        }
+
+        // 返回完整的字节数组
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(fileBytes);
     }
 
     /**
