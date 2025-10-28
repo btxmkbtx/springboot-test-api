@@ -56,6 +56,43 @@ public class FileStreamController {
     }
 
     /**
+     * PDF文件的字节组返回模式，代码和视频文件的字节组返回模式基本没有差异，都是Files.readAllBytes
+     */
+    @GetMapping("/api/preview/pdf/bytes")
+    @ResponseBody
+    public ResponseEntity<byte[]> getPdfBytes() {
+        try {
+            System.out.println("/api/preview/pdf (字节数组模式)");
+
+            // 构建PDF文件路径，对应Express.js中的 path.join(process.cwd(), "public", "pdf", "sample.pdf")
+            Path filePath = Paths.get("src/main/resources/pdf/sample.pdf");
+
+            if (!Files.exists(filePath)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // 一次性读取整个文件到字节数组（对应 fs.readFileSync）
+            byte[] fileBytes = Files.readAllBytes(filePath);
+            long fileSize = fileBytes.length;
+
+            // 构建响应头，对应Express.js中的 setHeader
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Type", "application/pdf");
+            headers.add("Content-Length", String.valueOf(fileSize));
+            headers.add("Content-Disposition", "inline; filename=test.pdf");
+
+            // 返回完整的字节数组
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(fileBytes);
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+
+    /**
      * 返回多个 PDF 的文件流（multipart/mixed）
      * 客户端需解析 multipart 边界并分别读取各部分的二进制内容
      * 对应 Express.js 版本：router.get("/api/preview/pdfs", async (_, res) => { ... })
